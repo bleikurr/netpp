@@ -39,7 +39,11 @@ public:
   // og til að taka í sitt eigið project
   void set_address(address::Address address);
   void sendto(const std::vector<std::byte> &data);
-  void recvfrom(std::vector<std::byte> &data);
+
+  /*
+   * @source will be reset when passed into this function
+   */
+  void recvfrom(std::vector<std::byte> &data, address::Address &source);
   int sockfd();
 };
 } // namespace netpp::sockets

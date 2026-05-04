@@ -8,6 +8,9 @@
 
 #include <sys/socket.h>
 namespace netpp::address {
+inline constexpr std::size_t SOCKADDR_MAX_SIZE =
+    sizeof(struct sockaddr_storage);
+
 class Address {
 private:
   std::string m_record;
@@ -27,23 +30,17 @@ private:
 public:
   Address() = delete;
   static std::optional<Address> get_address(std::string address);
+  static Address empty_address();
+  struct sockaddr *p_sockaddr();
 
-  struct sockaddr *sockaddr();
+  socklen_t *p_addrlen();
   socklen_t addrlen();
   std::string_view ip();
+  void parse_sockaddr();
   std::string_view name();
+  void reset();
 };
 
-typedef struct {
-  char *dns;
-  char *ip;
-  struct sockaddr_storage addr;
-  socklen_t addrlen;
-  bool reverse;
-} Record;
-
-Record *dns_lookup(char *address);
-void dns_free(Record *res);
 } // namespace netpp::address
 
 #endif

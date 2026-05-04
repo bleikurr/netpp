@@ -7,6 +7,7 @@
 #include <netdb.h>
 #include <netinet/in.h>
 
+#include <stdexcept>
 namespace netpp::address {
 
 Address::Address(std::string address, std::string ip, int family,
@@ -110,14 +111,52 @@ std::optional<Address> Address::get_address(std::string address) {
   }
 }
 
-struct sockaddr *Address::sockaddr() {
+Address Address::empty_address() {
+  struct sockaddr_storage addr{};
+  return Address("", "", 0, std::move(addr), SOCKADDR_MAX_SIZE);
+}
+
+struct sockaddr *Address::p_sockaddr() {
   return reinterpret_cast<struct sockaddr *>(&m_addr);
 }
 
+socklen_t *Address::p_addrlen() {
+  return reinterpret_cast<socklen_t *>(&m_addrlen);
+}
 socklen_t Address::addrlen() { return m_addrlen; }
 
 std::string_view Address::name() { return m_record; }
 
 std::string_view Address::ip() { return m_ip; }
+
+void Address::parse_sockaddr() {
+  constexpr size_t STRLEN = 64;
+  char ip_str[64] = {0};
+
+  m_addrfamily = m_addr.ss_family;
+
+  if (m_addrfamily == AF_INET) {
+    struct sockaddr_in *addr_in =
+        reinterpret_cast<struct sockaddr_in *>(&m_addr);
+    inet_ntop(m_addrfamily, &(addr_in->sin_addr), ip_str, STRLEN);
+
+  } else if (m_addrfamily == AF_INET6) {
+    struct sockaddr_in6 *addr_in =
+        reinterpret_cast<struct sockaddr_in6 *>(&m_addr);
+    inet_ntop(m_addrfamily, &(addr_in->sin6_addr), ip_str, STRLEN);
+  } else {
+    throw std::logic_error("Received from unsupported address family");
+  }
+
+  m_ip = ip_str;
+}
+
+void Address::reset() {
+  m_addrlen = SOCKADDR_MAX_SIZE;
+  m_record.clear();
+  m_ip.clear();
+  m_port = 0;
+  m_addrfamily = 0;
+}
 
 } // namespace netpp::address

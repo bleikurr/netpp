@@ -1,5 +1,6 @@
 #include "netpp/socket.hpp"
 
+#include "netpp/address.hpp"
 #include <netdb.h>
 #include <stdexcept>
 
@@ -94,20 +95,19 @@ void Socket::sendto(const std::vector<std::byte> &data) {
     throw std::logic_error(
         "No address set in 'sendto', did you forget to set address?");
   // TODO Look at passing flags
-  ::sendto(m_fd, data.data(), data.size(), 0, m_address->sockaddr(),
+  ::sendto(m_fd, data.data(), data.size(), 0, m_address->p_sockaddr(),
            m_address->addrlen());
 }
 
-void Socket::recvfrom(std::vector<std::byte> &data) {
+void Socket::recvfrom(std::vector<std::byte> &data, address::Address &source) {
   if (!m_address)
     throw std::logic_error(
         "No address set in 'recvfrom', did you forget to set address?");
 
-  struct sockaddr_storage addr{};
-  socklen_t addrlen = sizeof(addr);
+  source.reset();
   // TODO Look at passing flags
-  ::recvfrom(m_fd, data.data(), data.capacity(), 0,
-             reinterpret_cast<struct sockaddr *>(&addr), &addrlen);
+  ::recvfrom(m_fd, data.data(), data.capacity(), 0, source.p_sockaddr(),
+             source.p_addrlen());
 }
 
 int Socket::sockfd() { return m_fd; }
