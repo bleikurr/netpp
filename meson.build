@@ -11,7 +11,17 @@ netpp_lib = library(
   'netpp',
   src_files,
   include_directories: includes,
+  version: meson.project_version(),
   install: true
+)
+install_subdir('include/netpp', install_dir: get_option('includedir'))
+
+pkg = import('pkgconfig')
+pkg.generate(
+  netpp_lib,
+  description: 'C++ Networking wrapper library',
+  version: meson.project_version(),
+  name: 'netpp'
 )
 
 netpp_library_dep = declare_dependency(
